@@ -1,17 +1,32 @@
-
 class Scene {
+    init() {
+        this.level = 0;
+        this.score = 0;
+        this.buysForLevel = 0;
+        this.sellsForLevel = 0;
+        this.tweetsForLevel = 0;
+        this.goodNewsForLevel = 0;
+        this.badNewsForLevel = 0;
+        this.whalesForLevel = 0;
+        this.nextFireTime = 0;
+        this.nextSpawnTime = 0;
+        this.maxEntitiesPerRow = 2;
+        this.centerTextTimeout = 0;
+    }
 
-    constructor() {
-        console.log("asdfasf");
+    preload() {
+        this.keys = this.input.keyboard.createCursorKeys();
+        this.load.image('background', 'assets/background.png');
+        this.load.image('player', 'assets/player.png');
+        this.load.image('buy', 'assets/buy.png');
+        this.load.image('sell', 'assets/sell.png');
+        this.load.image('trxcoin', 'assets/trxcoin.png');
     }
 
     create() {
-
-        console.log("create")
-
         this.add.image(400, 300, 'background');
-        this.scoreText = this.add.text(8, 576, 'Value: ' + score + ' TRX', { fontSize: '16px', fill: '#fff' });
-        this.levelText = this.add.text(8, 12, 'Level: ' + level, { fontSize: '24px', fill: '#fff' });
+        this.scoreText = this.add.text(8, 576, 'Value: ' + this.score + ' TRX', { fontSize: '16px', fill: '#fff' });
+        this.levelText = this.add.text(8, 12, 'Level: ' + this.level, { fontSize: '24px', fill: '#fff' });
         this.centerText = this.add.text(300, 100, '', { fontSize: '48px', fill: '#C52F27' });
 
         this.player = this.physics.add.sprite(400, 530, 'player');
@@ -34,119 +49,195 @@ class Scene {
     }
 
     update() {
-        // Movement
+        this.handleMovement();
+        this.handleShooting();
+
+        if (this.levelHasEnded())
+            this.levelUp();
+
+        this.spawnStuff();
+
+        this.checkIfDead();
+
+        if (this.time.now > this.centerTextTimeout)
+            this.centerText.setText('');
+    }
+
+    handleMovement() {
         if (this.keys.left.isDown)
             this.player.setVelocityX(-400);
         else if (this.keys.right.isDown)
             this.player.setVelocityX(400);
         else
             this.player.setVelocityX(0);
+    }
 
-        // Shooting
-        if (this.keys.space.isDown && this.time.now > nextFireTime && score > 0) {
+    handleShooting() {
+        if (this.keys.space.isDown && this.time.now > this.nextFireTime && this.score > 0) {
             this.bullets.add(this.physics.add.sprite(this.player.x, this.player.y, 'trxcoin'));
-            nextFireTime = this.time.now + 500;
+            this.nextFireTime = this.time.now + 500;
             this.updateScore(-1);
         }
+    }
 
-        // Center text reset
-        if (this.time.now > centerTextTimeout)
-            this.centerText.setText('');
+    levelHasEnded() {
+        return this.buysForLevel === 0 && this.sellsForLevel === 0 && this.tweetsForLevel === 0 &&
+            this.goodNewsForLevel === 0 && this.badNewsForLevel === 0 && this.whalesForLevel === 0;
+    }
 
-        // Level up
-        if (this.buysForLevel === 0 && this.sellsForLevel === 0 && this.tweetsForLevel === 0 && this.goodNewsForLevel === 0 &&
-            this.badNewsForLevel === 0 && this.whalesForLevel === 0) {
-            level++;
-            this.levelText.setText('Level: ' + level);
-            if (this.level != 1) {
-                this.centerText.setText('Level up!');
-                this.centerTextTimeout = this.time.now + 2000;
-            }
-            // Todo: increase buys and sells speed
-            this.buys.velocityY += 500;
-
-            var buysAndSells = 10 + level * 5;
-            buysForLevel = buysAndSells;
-            sellsForLevel = buysAndSells;
+    levelUp() {
+        this.level++;
+        this.levelText.setText('Level: ' + this.level);
+        if (this.level !== 1) {
+            this.centerText.setText('Level up!');
+            this.centerTextTimeout = this.time.now + 2000;
         }
 
-        // Spawning stuff
-        if (this.time.now > nextSpawnTime) {
-            console.log(this);
-            for (var i = 0; i < this.getRandomBetween(0, maxEntitiesPerRow + 1); i++) {
-                var usedX = [];
-                var x = this.getRandomX();
-                while (this.arrayContains(usedX, x))
-                    x = this.getRandomX();
+        if (this.level % 5 === 0)
+            this.maxEntitiesPerRow++;
 
-                if (buysForLevel > 0 && sellsForLevel > 0) {
-                    if (this.getRandomBetween(1, 2) == 1) {
-                        buys.add(this.physics.add.sprite(x, -30, 'buy'));
-                        buysForLevel--;
-                    } else {
-                        sells.add(this.physics.add.sprite(x, -30, 'sell'));
-                        sellsForLevel--;
-                    }
-                } else if(buysForLevel > 0) {
-                    buys.add(this.physics.add.sprite(x, -30, 'buy'));
-                    buysForLevel--;
-                } else if(sellsForLevel > 0) {
-                    sells.add(this.physics.add.sprite(x, -30, 'sell'));
-                    sellsForLevel--;
-                }
-                usedX.push(x);
-            }
-            nextSpawnTime = this.time.now + 1000;
+        // Todo: increase buys and sells speed
+
+        let buysAndSells = 50 + this.level * 15;
+        this.buysForLevel = buysAndSells;
+        this.sellsForLevel = buysAndSells;
+
+        if (this.level >= 3)
+            this.tweetsForLevel = (this.level - 2) * 2;
+
+        if (this.level >= 8) {
+            let goodAndBadNews = (this.level - 7) * 2;
+            this.goodNewsForLevel = goodAndBadNews;
+            this.badNewsForLevel = goodAndBadNews;
+        }
+
+        if (this.level >= 13)
+            this.whalesForLevel = (this.level - 12);
+    }
+
+    spawnStuff() {
+        if (this.time.now > this.nextSpawnTime) {
+            this.spawnAnyEntity();
+            this.nextSpawnTime = this.time.now + 750;
         }
     }
 
-    preload() {
-        console.log("preload");
-        this.keys = this.input.keyboard.createCursorKeys();
-        this.load.image('background', 'assets/background.png');
-        this.load.image('player', 'assets/player.png');
-        this.load.image('buy', 'assets/buy.png');
-        this.load.image('sell', 'assets/sell.png');
-        this.load.image('trxcoin', 'assets/trxcoin.png');
+    spawnAnyEntity() {
+        let buysRange = this.buysForLevel / 5;
+        let sellsRange = buysRange + this.sellsForLevel / 5;
+        let tweetsRange = sellsRange + this.tweetsForLevel;
+        let goodNewsRange = tweetsRange + this.goodNewsForLevel;
+        let badNewsRange = goodNewsRange + this.badNewsForLevel;
+        let whalesRange = badNewsRange + this.whalesForLevel;
+        let rangeLimit = whalesRange * 1.1;
+
+        let randomPointInRange = this.getRandomBetween(0, rangeLimit);
+        if (randomPointInRange < buysRange)
+            this.spawnBuySellLine('buy');
+        else if (randomPointInRange < sellsRange)
+            this.spawnBuySellLine('sell');
+        else if (randomPointInRange < tweetsRange)
+            this.spawnTweet();
+        else if (randomPointInRange < goodNewsRange)
+            this.spawnGoodNews();
+        else if (randomPointInRange < badNewsRange)
+            this.spawnBadNews();
+        else if (randomPointInRange < whalesRange)
+            this.spawnWhale();
+        // else line will be empty
     }
 
-    init() {
-        this.level = 0;
-        this.score = 0;
-        this.buysForLevel = 0;
-        this.sellsForLevel = 0;
-        this.tweetsForLevel = 0;
-        this.goodNewsForLevel = 0;
-        this.badNewsForLevel = 0;
-        this.whalesForLevel = 0;
-        this.nextFireTime = 0;
-        this.nextSpawnTime = 0;
-        this.maxEntitiesPerRow = 3;
-        this.centerTextTimeout = 0;
+    spawnBuySellLine(initialEntity) {
+        let occupiedColumns = [];
+        let x = this.getRandomColumnForEntity();
+        occupiedColumns.push(x);
+        if (initialEntity === 'buy')
+            this.spawnBuy(x);
+        else
+            this.spawnSell(x);
+
+        for (let i = 0; i < this.getRandomBetween(0, this.maxEntitiesPerRow); i++) {
+            let buysRange = this.buysForLevel;
+            let sellsRange = buysRange + this.sellsForLevel;
+            let rangeLimit = sellsRange * 1.2;
+
+            let randomPointInRange = this.getRandomBetween(0, rangeLimit);
+            if (randomPointInRange < buysRange) {
+                while (this.arrayContains(occupiedColumns, x))
+                    x = this.getRandomColumnForEntity();
+                occupiedColumns.push(x);
+                this.spawnBuy(x);
+            }
+            else if (randomPointInRange < sellsRange) {
+                while (this.arrayContains(occupiedColumns, x))
+                    x = this.getRandomColumnForEntity();
+                occupiedColumns.push(x);
+                this.spawnSell(x);
+            }
+            // else spot will be empty
+        }
     }
 
-    getRandomX() {
-        return getRandomBetween(1, 24) * 32;
+    spawnBuy(x) {
+        this.buys.add(this.physics.add.sprite(x, -30, 'buy'));
+        this.buysForLevel--;
+    }
+
+    spawnSell(x) {
+        this.sells.add(this.physics.add.sprite(x, -30, 'sell'));
+        this.sellsForLevel--;
+    }
+
+    spawnTweet() {
+        // Todo
+        this.tweetsForLevel--;
+    }
+
+    spawnGoodNews() {
+        for (let i = 1; i <= 12; i++)
+            this.buys.add(this.physics.add.sprite(64 * i - 15, -30, 'buy'));
+        this.goodNewsForLevel--;
+    }
+
+    spawnBadNews() {
+        for (let i = 1; i <= 12; i++)
+            this.sells.add(this.physics.add.sprite(64 * i - 15, -30, 'sell'));
+        this.badNewsForLevel--;
+    }
+
+    spawnWhale() {
+        // Todo
+        this.whalesForLevel--;
+    }
+
+    checkIfDead() {
+        if (this.score <= 0) {
+            // Todo: die
+        }
+    }
+
+    getRandomColumnForEntity() {
+        return this.getRandomBetween(1, 24) * 32;
     }
 
     shootEntity(bullet, entity) {
-        this.bullet.disableBody(true, true);
-        this.entity.disableBody(true, true);
+        bullet.disableBody(true, true);
+        entity.disableBody(true, true);
     }
 
     hitBuy(player, buy) {
-        this.buy.disableBody(true, true);
+        buy.disableBody(true, true);
         this.updateScore(10);
     }
 
     hitSell(player, sell) {
-        this.sell.disableBody(true, true);
+        sell.disableBody(true, true);
         this.updateScore(-10);
     }
 
     updateScore(amount) {
         this.score += amount;
-        this.scoreText.setText('Value: ' + score + ' TRX');
+        this.scoreText.setText('Value: ' + this.score + ' TRX');
     }
 
     arrayContains(array, element) {
@@ -161,28 +252,20 @@ class Scene {
     }
 }
 
-
-
-var config = {
+let config = {
     type: Phaser.AUTO,
     width: 800,
-    parent: 'phaser-game',
     height: 600,
+    parent: 'phaser-game',
     physics: {
         default: 'arcade',
         arcade: {
-            gravity: { y: 0 },
+            gravity: {y: 0},
             debug: false
-        },
-    },
+        }
+    }
 };
 
-var game = new Phaser.Game(config);
-
-setTimeout(() => {
-    console.log("game", game);
-    game.state.add("main", Scene);
-    game.state.start("main");
-}, 500);
-
-
+let game = new Phaser.Game(config);
+game.scene.add("main", Scene);
+game.scene.start("main");
