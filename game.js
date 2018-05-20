@@ -10,6 +10,7 @@ class Scene {
         this.whalesForLevel = 0;
         this.nextFireTime = 0;
         this.nextSpawnTime = 0;
+        this.nextTweetSwitchTime = 0;
         this.maxEntitiesPerRow = 2;
         this.centerTextTimeout = 0;
     }
@@ -20,6 +21,7 @@ class Scene {
         this.load.image('player', 'assets/player.png');
         this.load.image('buy', 'assets/buy.png');
         this.load.image('sell', 'assets/sell.png');
+        this.load.image('tweet', 'assets/tweet.png');
         this.load.image('trxcoin', 'assets/trxcoin.png');
     }
 
@@ -38,12 +40,17 @@ class Scene {
         this.sells = this.physics.add.group({
             velocityY: 150
         });
+        this.tweets = this.physics.add.group({
+            velocityY: 50
+        });
         this.bullets = this.physics.add.group({
             velocityY: -750
         });
 
         this.physics.add.overlap(this.player, this.buys, this.hitBuy, null, this);
         this.physics.add.overlap(this.player, this.sells, this.hitSell, null, this);
+        this.physics.add.overlap(this.player, this.tweets, this.hitTweet, null, this);
+        // this.physics.add.overlap(this.tweets, this.col)
         this.physics.add.overlap(this.bullets, this.buys, this.shootEntity, null, this);
         this.physics.add.overlap(this.bullets, this.sells, this.shootEntity, null, this);
     }
@@ -51,6 +58,7 @@ class Scene {
     update() {
         this.handleMovement();
         this.handleShooting();
+        this.handleTweetMovement();
 
         if (this.levelHasEnded())
             this.levelUp();
@@ -80,6 +88,21 @@ class Scene {
         }
     }
 
+    handleTweetMovement() {
+        if (this.time.now > this.nextTweetSwitchTime) {
+            for (let i = 0; i < this.tweets.children.entries.length; i++) {
+                let tweet = this.tweets.children.entries[i];
+                if (tweet.body.velocity.x < 0)
+                    tweet.body.velocity.x = 100;
+                else
+                    tweet.body.velocity.x = -100;
+                tweet.scaleX *= -1;
+                console.log(tweet);
+            }
+            this.nextTweetSwitchTime = this.time.now + 3000;
+        }
+    }
+
     levelHasEnded() {
         return this.buysForLevel === 0 && this.sellsForLevel === 0 && this.tweetsForLevel === 0 &&
             this.goodNewsForLevel === 0 && this.badNewsForLevel === 0 && this.whalesForLevel === 0;
@@ -101,6 +124,11 @@ class Scene {
         let buysAndSells = 50 + this.level * 15;
         this.buysForLevel = buysAndSells;
         this.sellsForLevel = buysAndSells;
+
+        if (this.level == 1) {
+            // For testing purposes
+            this.tweetsForLevel = 100;
+        }
 
         if (this.level >= 3)
             this.tweetsForLevel = (this.level - 2) * 2;
@@ -131,7 +159,7 @@ class Scene {
         let whalesRange = badNewsRange + this.whalesForLevel;
         let rangeLimit = whalesRange * 1.1;
 
-        let randomPointInRange = this.getRandomBetween(0, rangeLimit);
+        let randomPointInRange = Scene.getRandomBetween(0, rangeLimit);
         if (randomPointInRange < buysRange)
             this.spawnBuySellLine('buy');
         else if (randomPointInRange < sellsRange)
@@ -149,28 +177,28 @@ class Scene {
 
     spawnBuySellLine(initialEntity) {
         let occupiedColumns = [];
-        let x = this.getRandomColumnForEntity();
+        let x = Scene.getRandomColumnForEntity();
         occupiedColumns.push(x);
         if (initialEntity === 'buy')
             this.spawnBuy(x);
         else
             this.spawnSell(x);
 
-        for (let i = 0; i < this.getRandomBetween(0, this.maxEntitiesPerRow); i++) {
+        for (let i = 0; i < Scene.getRandomBetween(0, this.maxEntitiesPerRow); i++) {
             let buysRange = this.buysForLevel;
             let sellsRange = buysRange + this.sellsForLevel;
             let rangeLimit = sellsRange * 1.2;
 
-            let randomPointInRange = this.getRandomBetween(0, rangeLimit);
+            let randomPointInRange = Scene.getRandomBetween(0, rangeLimit);
             if (randomPointInRange < buysRange) {
-                while (this.arrayContains(occupiedColumns, x))
-                    x = this.getRandomColumnForEntity();
+                while (Scene.arrayContains(occupiedColumns, x))
+                    x = Scene.getRandomColumnForEntity();
                 occupiedColumns.push(x);
                 this.spawnBuy(x);
             }
             else if (randomPointInRange < sellsRange) {
-                while (this.arrayContains(occupiedColumns, x))
-                    x = this.getRandomColumnForEntity();
+                while (Scene.arrayContains(occupiedColumns, x))
+                    x = Scene.getRandomColumnForEntity();
                 occupiedColumns.push(x);
                 this.spawnSell(x);
             }
@@ -189,7 +217,9 @@ class Scene {
     }
 
     spawnTweet() {
-        // Todo
+        let tweet = this.physics.add.sprite(Scene.getRandomColumnForEntity(), -30, 'tweet');
+        this.tweets.add(tweet);
+        tweet.body.velocity.x = 100;
         this.tweetsForLevel--;
     }
 
@@ -216,10 +246,6 @@ class Scene {
         }
     }
 
-    getRandomColumnForEntity() {
-        return this.getRandomBetween(1, 24) * 32;
-    }
-
     shootEntity(bullet, entity) {
         bullet.disableBody(true, true);
         entity.disableBody(true, true);
@@ -235,19 +261,28 @@ class Scene {
         this.updateScore(-10);
     }
 
+    hitTweet(player, tweet) {
+        tweet.disableBody(true, true);
+        this.updateScore(25);
+    }
+
     updateScore(amount) {
         this.score += amount;
         this.scoreText.setText('Value: ' + this.score + ' TRX');
     }
 
-    arrayContains(array, element) {
-        for (var i = 0; i < array.length; i++)
+    static arrayContains(array, element) {
+        for (let i = 0; i < array.length; i++)
             if (array[i] === element)
                 return true;
         return false;
     }
 
-    getRandomBetween(min, max) {
+    static getRandomColumnForEntity() {
+        return Scene.getRandomBetween(1, 24) * 32;
+    }
+
+    static getRandomBetween(min, max) {
         return Math.floor((Math.random() * max) + min)
     }
 }
