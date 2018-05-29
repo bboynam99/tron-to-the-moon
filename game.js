@@ -10,7 +10,6 @@ class Scene {
         this.whalesForLevel = 0;
         this.nextFireTime = 0;
         this.nextSpawnTime = 0;
-        this.nextTweetSwitchTime = 0;
         this.maxEntitiesPerRow = 2;
         this.centerTextTimeout = 0;
     }
@@ -102,16 +101,18 @@ class Scene {
     }
 
     handleTweetMovement() {
-        if (this.time.now > this.nextTweetSwitchTime) {
-            for (let i = 0; i < this.tweets.children.entries.length; i++) {
-                let tweet = this.tweets.children.entries[i];
+        for (let i = 0; i < this.tweets.children.entries.length; i++) {
+            let tweet = this.tweets.children.entries[i];
+            if (this.time.now > tweet.nextSwitchTime ||
+                (tweet.body.x <= 30 && tweet.body.velocity.x < 0) ||
+                (tweet.body.x >= 770 && tweet.body.velocity.x > 0)) {
                 if (tweet.body.velocity.x < 0)
                     tweet.body.velocity.x = 100;
                 else
                     tweet.body.velocity.x = -100;
                 tweet.scaleX *= -1;
+                tweet.nextSwitchTime = this.time.now + Scene.getRandomBetween(20, 40) * 100;
             }
-            this.nextTweetSwitchTime = this.time.now + 3000;
         }
     }
 
@@ -243,6 +244,11 @@ class Scene {
         let tweet = this.physics.add.sprite(Scene.getRandomColumnForEntity(), -30, 'tweet');
         this.tweets.add(tweet);
         tweet.body.velocity.x = 100;
+
+        if (Scene.getRandomBetween(1, 2) === 1)
+            tweet.nextSwitchTime = this.time.now + 3000;
+        else
+            tweet.nextSwitchTime = this.time.now;
         this.tweetsForLevel--;
     }
 
