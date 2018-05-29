@@ -2,16 +2,20 @@ class Scene {
     init() {
         this.level = 0;
         this.score = 0;
+
         this.buysForLevel = 0;
         this.sellsForLevel = 0;
         this.tweetsForLevel = 0;
         this.goodNewsForLevel = 0;
         this.badNewsForLevel = 0;
         this.whalesForLevel = 0;
+
         this.nextFireTime = 0;
         this.nextSpawnTime = 0;
-        this.maxEntitiesPerRow = 2;
         this.centerTextTimeout = 0;
+
+        this.maxEntitiesPerRow = 2;
+        this.velocityWeight = 0;
     }
 
     preload() {
@@ -34,21 +38,11 @@ class Scene {
         this.player = this.physics.add.sprite(400, 530, 'player');
         this.player.setCollideWorldBounds(true);
 
-        this.buys = this.physics.add.group({
-            velocityY: 150
-        });
-        this.sells = this.physics.add.group({
-            velocityY: 150
-        });
-        this.tweets = this.physics.add.group({
-            velocityY: 50
-        });
-        this.whales = this.physics.add.group({
-            velocityY: 300
-        });
-        this.bullets = this.physics.add.group({
-            velocityY: -750
-        });
+        this.buys = this.physics.add.group();
+        this.sells = this.physics.add.group();
+        this.tweets = this.physics.add.group();
+        this.whales = this.physics.add.group();
+        this.bullets = this.physics.add.group();
 
         this.physics.add.overlap(this.player, this.buys, this.hitBuy, null, this);
         this.physics.add.overlap(this.player, this.sells, this.hitSell, null, this);
@@ -86,7 +80,9 @@ class Scene {
 
     handleShooting() {
         if (this.keys.space.isDown && this.time.now > this.nextFireTime && this.score > 0) {
-            this.bullets.add(this.physics.add.sprite(this.player.x, this.player.y, 'trxcoin'));
+            let bullet = this.physics.add.sprite(this.player.x, this.player.y, 'trxcoin');
+            this.bullets.add(bullet);
+            bullet.body.velocity.y = -750;
             this.nextFireTime = this.time.now + 500;
             this.updateScore(-1);
         }
@@ -134,6 +130,8 @@ class Scene {
 
     levelUp() {
         this.level++;
+        this.velocityWeight = this.level + 9;
+
         this.levelText.setText('Level: ' + this.level);
         if (this.level !== 1) {
             this.centerText.setText('Level up!');
@@ -142,8 +140,6 @@ class Scene {
 
         if (this.level % 5 === 0)
             this.maxEntitiesPerRow++;
-
-        // Todo: increase buys and sells speed
 
         let buysAndSells = 50 + this.level * 15;
         this.buysForLevel = buysAndSells;
@@ -170,7 +166,7 @@ class Scene {
     spawnStuff() {
         if (this.time.now > this.nextSpawnTime) {
             this.spawnAnyEntity();
-            this.nextSpawnTime = this.time.now + 750;
+            this.nextSpawnTime = this.time.now + 850 - (this.velocityWeight * 10);
         }
     }
 
@@ -231,19 +227,24 @@ class Scene {
     }
 
     spawnBuy(x) {
-        this.buys.add(this.physics.add.sprite(x, -30, 'buy'));
+        let buy = this.physics.add.sprite(x, -30, 'buy');
+        this.buys.add(buy);
+        buy.body.velocity.y = 15 * this.velocityWeight;
         this.buysForLevel--;
     }
 
     spawnSell(x) {
-        this.sells.add(this.physics.add.sprite(x, -30, 'sell'));
+        let sell = this.physics.add.sprite(x, -30, 'sell');
+        this.sells.add(sell);
+        sell.body.velocity.y = 15 * this.velocityWeight;
         this.sellsForLevel--;
     }
 
     spawnTweet() {
         let tweet = this.physics.add.sprite(Scene.getRandomColumnForEntity(), -30, 'tweet');
         this.tweets.add(tweet);
-        tweet.body.velocity.x = 100;
+        tweet.body.velocity.y = 5 * this.velocityWeight;
+        tweet.body.velocity.x = 10 * this.velocityWeight;
 
         if (Scene.getRandomBetween(1, 2) === 1)
             tweet.nextSwitchTime = this.time.now + 3000;
@@ -253,14 +254,20 @@ class Scene {
     }
 
     spawnGoodNews() {
-        for (let i = 1; i <= 6; i++)
-            this.buys.add(this.physics.add.sprite(128 * i - 45, -30, 'buy'));
+        for (let i = 1; i <= 6; i++) {
+            let buy = this.physics.add.sprite(128 * i - 45, -30, 'buy');
+            this.buys.add(buy);
+            buy.body.velocity.y = 15 * this.velocityWeight;
+        }
         this.goodNewsForLevel--;
     }
 
     spawnBadNews() {
-        for (let i = 1; i <= 6; i++)
-            this.sells.add(this.physics.add.sprite(128 * i - 45, -30, 'sell'));
+        for (let i = 1; i <= 6; i++) {
+            let sell = this.physics.add.sprite(128 * i - 45, -30, 'sell');
+            this.sells.add(sell);
+            sell.body.velocity.y = 15 * this.velocityWeight;
+        }
         this.badNewsForLevel--;
     }
 
@@ -269,19 +276,23 @@ class Scene {
         let sellsHeadstart = (Scene.getRandomBetween(1, 2) - 1) * 300;
 
         // Buys bulk
-        for (let i = 1; i <= 5; i++)
-            this.buys.add(this.physics.add.sprite(position - 135 + 45 * i, -30, 'buy'));
+        for (let i = 1; i <= 5; i++) {
+            let buy = this.physics.add.sprite(position - 135 + 45 * i, -30, 'buy');
+            this.buys.add(buy);
+            buy.body.velocity.y = 15 * this.velocityWeight;
+        }
 
         // Sells bulk
         for (let i = 1; i <= 5; i++) {
             let sell = this.physics.add.sprite(position - 135 + 45 * i, -650 + sellsHeadstart, 'sell');
             this.sells.add(sell);
-            sell.body.velocity.y = 300;
+            sell.body.velocity.y = 30 * this.velocityWeight;
         }
 
         // Whale
         let whale = this.physics.add.sprite(position, -680 + sellsHeadstart, 'whale');
         this.whales.add(whale);
+        whale.body.velocity.y = 30 * this.velocityWeight;
         whale.rotation = 1;
         this.whalesForLevel--;
     }
