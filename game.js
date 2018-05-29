@@ -22,6 +22,7 @@ class Scene {
         this.load.image('buy', 'assets/buy.png');
         this.load.image('sell', 'assets/sell.png');
         this.load.image('tweet', 'assets/tweet.png');
+        this.load.image('whale', 'assets/whale.png');
         this.load.image('trxcoin', 'assets/trxcoin.png');
     }
 
@@ -43,6 +44,9 @@ class Scene {
         this.tweets = this.physics.add.group({
             velocityY: 50
         });
+        this.whales = this.physics.add.group({
+            velocityY: 300
+        });
         this.bullets = this.physics.add.group({
             velocityY: -750
         });
@@ -50,7 +54,6 @@ class Scene {
         this.physics.add.overlap(this.player, this.buys, this.hitBuy, null, this);
         this.physics.add.overlap(this.player, this.sells, this.hitSell, null, this);
         this.physics.add.overlap(this.player, this.tweets, this.hitTweet, null, this);
-        // this.physics.add.overlap(this.tweets, this.col)
         this.physics.add.overlap(this.bullets, this.buys, this.shootEntity, null, this);
         this.physics.add.overlap(this.bullets, this.sells, this.shootEntity, null, this);
     }
@@ -59,6 +62,7 @@ class Scene {
         this.handleMovement();
         this.handleShooting();
         this.handleTweetMovement();
+        this.handleWhaleMovement();
 
         if (this.levelHasEnded())
             this.levelUp();
@@ -97,9 +101,19 @@ class Scene {
                 else
                     tweet.body.velocity.x = -100;
                 tweet.scaleX *= -1;
-                console.log(tweet);
             }
             this.nextTweetSwitchTime = this.time.now + 3000;
+        }
+    }
+
+    handleWhaleMovement() {
+        for (let i = 0; i < this.whales.children.entries.length; i++) {
+            let whale = this.whales.children.entries[i];
+            if (whale.body.y >= 200) {
+                whale.body.velocity.x = 200;
+                whale.body.velocity.y = -200;
+                whale.body.rotation = 0;
+            }
         }
     }
 
@@ -236,12 +250,29 @@ class Scene {
     }
 
     spawnWhale() {
-        // Todo
+        let position = Scene.getRandomBetween(1, 3) * 200;
+        let sellsHeadstart = (Scene.getRandomBetween(1, 2) - 1) * 300;
+
+        // Buys bulk
+        for (let i = 1; i <= 5; i++)
+            this.buys.add(this.physics.add.sprite(position - 135 + 45 * i, -30, 'buy'));
+
+        // Sells bulk
+        for (let i = 1; i <= 5; i++) {
+            let sell = this.physics.add.sprite(position - 135 + 45 * i, -650 + sellsHeadstart, 'sell');
+            this.sells.add(sell);
+            sell.body.velocity.y = 300;
+        }
+
+        // Whale
+        let whale = this.physics.add.sprite(position, -680 + sellsHeadstart, 'whale');
+        this.whales.add(whale);
+        whale.rotation = 1;
         this.whalesForLevel--;
     }
 
     checkIfDead() {
-        if (this.score <= 0) {
+        if (this.score < 0) {
             // Todo: die
         }
     }
