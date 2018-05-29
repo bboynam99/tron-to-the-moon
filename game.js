@@ -61,6 +61,7 @@ class Scene {
     update() {
         this.handleMovement();
         this.handleShooting();
+        this.handleGarbage();
         this.handleTweetMovement();
         this.handleWhaleMovement();
 
@@ -90,6 +91,14 @@ class Scene {
             this.nextFireTime = this.time.now + 500;
             this.updateScore(-1);
         }
+    }
+
+    handleGarbage() {
+        Scene.removePassedItems(this.buys);
+        Scene.removePassedItems(this.sells);
+        Scene.removePassedItems(this.tweets);
+        Scene.removePassedItems(this.whales);
+        Scene.removePassedItems(this.bullets);
     }
 
     handleTweetMovement() {
@@ -307,6 +316,16 @@ class Scene {
             if (array[i] === element)
                 return true;
         return false;
+    }
+
+    static removePassedItems(collection) {
+        for (let i = 0; i < collection.children.entries.length; i++) {
+            let item = collection.children.entries[i];
+            if (item.body.y >= 600 || item.body.y <= -700) {
+                collection.remove(item);
+                item.disableBody(true, true);
+            }
+        }
     }
 
     static getRandomColumnForEntity() {
