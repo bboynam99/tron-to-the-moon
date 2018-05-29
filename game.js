@@ -253,14 +253,14 @@ class Scene {
     }
 
     spawnGoodNews() {
-        for (let i = 1; i <= 12; i++)
-            this.buys.add(this.physics.add.sprite(64 * i - 15, -30, 'buy'));
+        for (let i = 1; i <= 6; i++)
+            this.buys.add(this.physics.add.sprite(128 * i - 45, -30, 'buy'));
         this.goodNewsForLevel--;
     }
 
     spawnBadNews() {
-        for (let i = 1; i <= 12; i++)
-            this.sells.add(this.physics.add.sprite(64 * i - 15, -30, 'sell'));
+        for (let i = 1; i <= 6; i++)
+            this.sells.add(this.physics.add.sprite(128 * i - 45, -30, 'sell'));
         this.badNewsForLevel--;
     }
 
