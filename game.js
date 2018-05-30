@@ -22,10 +22,18 @@ class Scene {
         this.keys = this.input.keyboard.createCursorKeys();
         this.load.image('background', 'assets/background.png');
         this.load.image('player', 'assets/player.png');
+
         this.load.image('buy', 'assets/buy.png');
         this.load.image('sell', 'assets/sell.png');
         this.load.image('tweet', 'assets/tweet.png');
         this.load.image('whale', 'assets/whale.png');
+
+        this.load.image('litecoin', 'assets/litecoin.png');
+        this.load.image('eos', 'assets/eos.png');
+        this.load.image('ripple', 'assets/ripple.png');
+        this.load.image('ethereum', 'assets/ethereum.png');
+        this.load.image('bitcoin', 'assets/bitcoin.png');
+
         this.load.image('trxcoin', 'assets/trxcoin.png');
     }
 
@@ -33,6 +41,8 @@ class Scene {
         this.add.image(400, 300, 'background');
         this.scoreText = this.add.text(8, 576, 'Value: ' + this.score + ' TRX', { fontSize: '16px', fill: '#fff' });
         this.levelText = this.add.text(8, 12, 'Level: ' + this.level, { fontSize: '24px', fill: '#fff' });
+        this.bossHealthText = this.add.text(0, 12, '', { fontSize: '24px', fill: '#fff' });
+        this.bossHealthText.x = 792 - this.bossHealthText.width;
         this.centerText = this.add.text(300, 100, '', { fontSize: '48px', fill: '#C52F27' });
 
         this.player = this.physics.add.sprite(400, 530, 'player');
@@ -43,6 +53,8 @@ class Scene {
         this.tweets = this.physics.add.group();
         this.whales = this.physics.add.group();
         this.bullets = this.physics.add.group();
+
+        this.boss = null;
 
         this.physics.add.overlap(this.player, this.buys, this.hitBuy, null, this);
         this.physics.add.overlap(this.player, this.sells, this.hitSell, null, this);
@@ -59,7 +71,10 @@ class Scene {
         this.handleWhaleMovement();
 
         if (this.levelHasEnded())
-            this.levelUp();
+            if (this.bossFightPending())
+                this.startBossFight();
+            else
+                this.levelUp();
 
         this.spawnStuff();
 
@@ -125,10 +140,16 @@ class Scene {
 
     levelHasEnded() {
         return this.buysForLevel === 0 && this.sellsForLevel === 0 && this.tweetsForLevel === 0 &&
-            this.goodNewsForLevel === 0 && this.badNewsForLevel === 0 && this.whalesForLevel === 0;
+            this.goodNewsForLevel === 0 && this.badNewsForLevel === 0 && this.whalesForLevel === 0 &&
+            this.boss === null;
+    }
+
+    bossFightPending() {
+        return this.level > 0 && this.level % 5 === 0;
     }
 
     levelUp() {
+        this.bossHealthText.setText('');
         this.level++;
         this.velocityWeight = this.level + 9;
 
@@ -161,6 +182,40 @@ class Scene {
 
         if (this.level >= 13)
             this.whalesForLevel = (this.level - 12);
+    }
+
+    startBossFight() {
+        if (this.level === 5) {
+            this.boss = this.physics.add.sprite(400, 70, 'litecoin');
+            this.boss.health = 100;
+            this.boss.fullname = 'Litecoin';
+            this.boss.coinname = 'LTC';
+        } else if (this.level === 10) {
+            this.boss = this.physics.add.sprite(400, 70, 'eos');
+            this.boss.health = 100;
+            this.boss.fullname = 'EOS';
+            this.boss.coinname = 'EOS';
+        } else if (this.level === 15) {
+            this.boss = this.physics.add.sprite(400, 70, 'ripple');
+            this.boss.health = 100;
+            this.boss.fullname = 'Ripple';
+            this.boss.coinname = 'XRP';
+        } else if (this.level === 20) {
+            this.boss = this.physics.add.sprite(400, 70, 'ethereum');
+            this.boss.health = 100;
+            this.boss.fullname = 'Ethereum';
+            this.boss.coinname = 'ETH';
+        } else if (this.level === 25) {
+            this.boss = this.physics.add.sprite(400, 70, 'bitcoin');
+            this.boss.health = 100;
+            this.boss.fullname = 'Bitcoin';
+            this.boss.coinname = 'BTC';
+        } else
+            return;
+
+        this.physics.add.overlap(this.bullets, this.boss, this.shootBoss, null, this);
+        this.levelText.setText('Level: ' + this.boss.fullname);
+        this.updateBossHealth(0);
     }
 
     spawnStuff() {
@@ -308,6 +363,16 @@ class Scene {
         entity.disableBody(true, true);
     }
 
+    shootBoss(boss, bullet) {
+        bullet.disableBody(true, true);
+        this.updateBossHealth(-10);
+        if (boss.health <= 0) {
+            boss.disableBody(true, true);
+            this.boss = null;
+            this.levelUp();
+        }
+    }
+
     hitBuy(player, buy) {
         buy.disableBody(true, true);
         this.updateScore(10);
@@ -326,6 +391,12 @@ class Scene {
     updateScore(amount) {
         this.score += amount;
         this.scoreText.setText('Value: ' + this.score + ' TRX');
+    }
+
+    updateBossHealth(amount) {
+        this.boss.health += amount;
+        this.bossHealthText.setText('Boss\' value: ' + this.boss.health + ' ' + this.boss.coinname);
+        this.bossHealthText.x = 792 - this.bossHealthText.width;
     }
 
     static arrayContains(array, element) {
