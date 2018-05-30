@@ -69,6 +69,7 @@ class Scene {
         this.handleGarbage();
         this.handleTweetMovement();
         this.handleWhaleMovement();
+        this.handleBossMovement();
 
         if (this.levelHasEnded())
             if (this.bossFightPending())
@@ -136,6 +137,27 @@ class Scene {
                 whale.body.rotation = 0;
             }
         }
+    }
+
+    handleBossMovement() {
+        if (this.boss == null)
+            return;
+
+        // Dodge if necessary
+        for (let bulletIndex = 0; bulletIndex < this.bullets.children.entries.length; bulletIndex++) {
+            let bullet = this.bullets.children.entries[bulletIndex];
+            if (bullet.body.y > this.boss.body.y &&
+                bullet.body.x > this.boss.body.x - 45 &&
+                bullet.body.x < this.boss.body.x + 105) {
+                // Dodge
+                if ((bullet.body.x < this.boss.body.x + 45 && bullet.body.x <= 650) || bullet.body.x <= 100)
+                    this.boss.body.velocity.x = 300;
+                else
+                    this.boss.body.velocity.x = -300;
+                return;
+            }
+        }
+        this.boss.body.velocity.x = 0;
     }
 
     levelHasEnded() {
@@ -359,11 +381,13 @@ class Scene {
     }
 
     shootEntity(bullet, entity) {
+        this.bullets.remove(bullet);
         bullet.disableBody(true, true);
         entity.disableBody(true, true);
     }
 
     shootBoss(boss, bullet) {
+        this.bullets.remove(bullet);
         bullet.disableBody(true, true);
         this.updateBossHealth(-10);
         if (boss.health <= 0) {
