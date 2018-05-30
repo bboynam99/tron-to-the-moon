@@ -53,12 +53,14 @@ class Scene {
         this.tweets = this.physics.add.group();
         this.whales = this.physics.add.group();
         this.bullets = this.physics.add.group();
+        this.bossBullets = this.physics.add.group();
 
         this.boss = null;
 
         this.physics.add.overlap(this.player, this.buys, this.hitBuy, null, this);
         this.physics.add.overlap(this.player, this.sells, this.hitSell, null, this);
         this.physics.add.overlap(this.player, this.tweets, this.hitTweet, null, this);
+        this.physics.add.overlap(this.player, this.bossBullets, this.hitBossBullet, null, this);
         this.physics.add.overlap(this.bullets, this.buys, this.shootEntity, null, this);
         this.physics.add.overlap(this.bullets, this.sells, this.shootEntity, null, this);
     }
@@ -110,6 +112,7 @@ class Scene {
         Scene.removePassedItems(this.tweets);
         Scene.removePassedItems(this.whales);
         Scene.removePassedItems(this.bullets);
+        Scene.removePassedItems(this.bossBullets);
     }
 
     handleTweetMovement() {
@@ -142,6 +145,28 @@ class Scene {
     handleBossMovement() {
         if (this.boss == null)
             return;
+
+        // Shoot if able
+        if (this.time.now > this.boss.nextShotTime) {
+            if (this.player.body.y > this.boss.body.y &&
+                this.player.body.x > this.boss.body.x - 45 &&
+                this.player.body.x < this.boss.body.x + 45) {
+                // Shoot
+                let bullet = this.physics.add.sprite(this.boss.x, this.boss.y, 'trxcoin');
+                this.bossBullets.add(bullet);
+                bullet.body.velocity.y = 750;
+                this.boss.nextShotTime = this.time.now + 1000;
+                this.updateBossHealth(-1);
+            } else {
+                // Move to player
+                if ((this.player.body.x < this.boss.body.x + 45 && this.player.body.x <= 650) ||
+                    this.player.body.x <= 100)
+                    this.boss.body.velocity.x = -300;
+                else
+                    this.boss.body.velocity.x = 300;
+                return;
+            }
+        }
 
         // Dodge if necessary
         for (let bulletIndex = 0; bulletIndex < this.bullets.children.entries.length; bulletIndex++) {
@@ -176,10 +201,8 @@ class Scene {
         this.velocityWeight = this.level + 9;
 
         this.levelText.setText('Level: ' + this.level);
-        if (this.level !== 1) {
-            this.centerText.setText('Level up!');
-            this.centerTextTimeout = this.time.now + 2000;
-        }
+        if (this.level !== 1)
+            this.displayTextInCenter('Level up!');
 
         if (this.level % 5 === 0)
             this.maxEntitiesPerRow++;
@@ -235,8 +258,10 @@ class Scene {
         } else
             return;
 
+        this.boss.nextShotTime = this.time.now + 500;
         this.physics.add.overlap(this.bullets, this.boss, this.shootBoss, null, this);
         this.levelText.setText('Level: ' + this.boss.fullname);
+        this.displayTextInCenter('Coin deathmatch!');
         this.updateBossHealth(0);
     }
 
@@ -390,26 +415,30 @@ class Scene {
         this.bullets.remove(bullet);
         bullet.disableBody(true, true);
         this.updateBossHealth(-10);
-        if (boss.health <= 0) {
-            boss.disableBody(true, true);
-            this.boss = null;
-            this.levelUp();
-        }
     }
 
     hitBuy(player, buy) {
+        this.buys.remove(buy);
         buy.disableBody(true, true);
         this.updateScore(10);
     }
 
     hitSell(player, sell) {
+        this.sells.remove(sell);
         sell.disableBody(true, true);
         this.updateScore(-10);
     }
 
     hitTweet(player, tweet) {
+        this.tweets.remove(tweet);
         tweet.disableBody(true, true);
         this.updateScore(25);
+    }
+
+    hitBossBullet(player, bossBullet) {
+        this.bossBullets.remove(bossBullet);
+        bossBullet.disableBody(true, true);
+        this.updateScore(-20);
     }
 
     updateScore(amount) {
@@ -421,6 +450,17 @@ class Scene {
         this.boss.health += amount;
         this.bossHealthText.setText('Boss\' value: ' + this.boss.health + ' ' + this.boss.coinname);
         this.bossHealthText.x = 792 - this.bossHealthText.width;
+
+        if (this.boss.health <= 0) {
+            this.boss.disableBody(true, true);
+            this.boss = null;
+            this.levelUp();
+        }
+    }
+
+    displayTextInCenter(text) {
+        this.centerText.setText(text);
+        this.centerTextTimeout = this.time.now + 2000;
     }
 
     static arrayContains(array, element) {
