@@ -1,8 +1,10 @@
 class Scene {
     init() {
         this.gameRunning = false;
+        this.inMenu = false;
         this.level = 0;
         this.score = 0;
+        this.deathTime = 0;
 
         this.buysForLevel = 0;
         this.sellsForLevel = 0;
@@ -71,7 +73,7 @@ class Scene {
 
             if (this.time.now > this.centerTextTimeout)
                 this.centerText.setText('');
-        } else {
+        } else if(this.inMenu) {
             if (this.keys.space.isDown)
                 this.startGame();
             if (this.keys.left.isDown)
@@ -80,6 +82,9 @@ class Scene {
                 this.showControls();
             if (this.keys.down.isDown)
                 this.showCredits();
+        } else {
+            if (this.keys.left.isDown && this.time.now > this.deathTime + 3000)
+                this.resetGame();
         }
     }
 
@@ -92,6 +97,8 @@ class Scene {
     }
 
     showMainMenu() {
+        this.inMenu = true;
+
         this.clearMenus();
         this.gameTitle.setText('Tron To The Moon!');
         this.firstMenuLineText.setText('Press [space] to start game');
@@ -162,6 +169,7 @@ class Scene {
         this.physics.add.overlap(this.bullets, this.sells, this.shootEntity, null, this);
 
         this.clearMenus();
+        this.inMenu = false;
         this.gameRunning = true;
     }
 
@@ -300,6 +308,12 @@ class Scene {
         this.bossHealthText.setText('');
 
         this.level++;
+
+        if (this.level === 26) {
+            this.gameWon();
+            return;
+        }
+
         this.velocityWeight = this.level + 9;
 
         this.levelText.setText('Level: ' + this.level);
@@ -516,12 +530,6 @@ class Scene {
         this.whalesForLevel--;
     }
 
-    checkIfDead() {
-        if (this.score < 0) {
-            // Todo: die
-        }
-    }
-
     shootEntity(bullet, entity) {
         this.bullets.remove(bullet);
         bullet.disableBody(true, true);
@@ -579,6 +587,60 @@ class Scene {
         this.centerText.setText(text);
         this.centerText.x = 400 - this.centerText.width / 2;
         this.centerTextTimeout = this.time.now + 2000;
+    }
+
+    checkIfDead() {
+        if (this.score < 0) {
+            this.gameRunning = false;
+
+            this.scoreText.setText('');
+            this.levelText.setText('');
+            this.bossHealthText.setText('');
+            this.centerText.setText('');
+
+            this.gameTitle.setText('Game over.');
+            this.firstMenuLineText.setText('You made it to level ' + this.level);
+            this.secondMenuLineText.setText('Your score is ' + this.score + ' TRX');
+            this.thirdMenuLineText.setText('Press [left] to return');
+            this.setMenuLineWidth();
+
+            this.deathTime = this.time.now;
+        }
+    }
+
+    gameWon() {
+        this.gameRunning = false;
+
+        this.scoreText.setText('');
+        this.levelText.setText('');
+        this.bossHealthText.setText('');
+        this.centerText.setText('');
+
+        this.gameTitle.setText('You went to the moon!');
+        this.firstMenuLineText.setText('You made it to level ' + this.level);
+        this.secondMenuLineText.setText('Your score is ' + this.score + ' TRX');
+        this.thirdMenuLineText.setText('Press [left] to return');
+        this.setMenuLineWidth();
+
+        this.deathTime = this.time.now;
+    }
+
+    resetGame() {
+        this.scoreText = null;
+        this.levelText = null;
+        this.bossHealthText = null;
+        this.centerText = null;
+
+        this.player.disableBody(true, true);
+        this.player = null;
+
+        if (this.boss != null) {
+            this.boss.disableBody(true, true);
+            this.boss = null;
+        }
+
+        this.init();
+        this.showMainMenu();
     }
 
     static arrayContains(array, element) {
