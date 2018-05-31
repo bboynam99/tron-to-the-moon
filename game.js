@@ -225,6 +225,7 @@ class Scene {
 
     levelUp() {
         this.bossHealthText.setText('');
+
         this.level++;
         this.velocityWeight = this.level + 9;
 
@@ -238,11 +239,6 @@ class Scene {
         let buysAndSells = 50 + this.level * 15;
         this.buysForLevel = buysAndSells;
         this.sellsForLevel = buysAndSells;
-
-        if (this.level == 1) {
-            // For testing purposes
-            this.tweetsForLevel = 100;
-        }
 
         if (this.level >= 3)
             this.tweetsForLevel = (this.level - 2) * 2;
