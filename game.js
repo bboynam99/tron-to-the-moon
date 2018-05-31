@@ -1,5 +1,6 @@
 class Scene {
     init() {
+        this.gameRunning = false;
         this.level = 0;
         this.score = 0;
 
@@ -44,6 +45,97 @@ class Scene {
 
     create() {
         this.add.image(400, 300, 'background');
+
+        this.initMenuTexts();
+        this.showMainMenu();
+    }
+
+    update() {
+        if (this.gameRunning) {
+            this.handleMovement();
+            this.handleShooting();
+            this.handleGarbage();
+            this.handleTweetMovement();
+            this.handleWhaleMovement();
+            this.handleBossMovement();
+
+            if (this.levelHasEnded())
+                if (this.bossFightPending())
+                    this.startBossFight();
+                else
+                    this.levelUp();
+
+            this.spawnStuff();
+
+            this.checkIfDead();
+
+            if (this.time.now > this.centerTextTimeout)
+                this.centerText.setText('');
+        } else {
+            if (this.keys.space.isDown)
+                this.startGame();
+            if (this.keys.left.isDown)
+                this.showMainMenu();
+            if (this.keys.up.isDown)
+                this.showControls();
+            if (this.keys.down.isDown)
+                this.showCredits();
+        }
+    }
+
+    initMenuTexts() {
+        this.gameTitle = this.add.text(0, 80, '', { fontSize: '64px', fill: '#fff' });
+        this.firstMenuLineText = this.add.text(0, 230, '', { fontSize: '36px', fill: '#fff' });
+        this.secondMenuLineText = this.add.text(0, 290, '', { fontSize: '36px', fill: '#fff' });
+        this.thirdMenuLineText = this.add.text(0, 350, '', { fontSize: '36px', fill: '#fff' });
+        this.bottomMenuLineText = this.add.text(0, 556, '', { fontSize: '36px', fill: '#fff' });
+    }
+
+    showMainMenu() {
+        this.clearMenus();
+        this.gameTitle.setText('Tron To The Moon!');
+        this.firstMenuLineText.setText('Press [space] to start game');
+        this.secondMenuLineText.setText('Press [up] to see the controls');
+        this.thirdMenuLineText.setText('Press [down] to see the credits');
+        this.setMenuLineWidth();
+    }
+
+    showControls() {
+        this.clearMenus();
+        this.gameTitle.setText('Tron To The Moon!');
+        this.firstMenuLineText.setText('Move around with [left] and [right]');
+        this.secondMenuLineText.setText('Shoot a coin with [space]');
+        this.bottomMenuLineText.setText('Press [left] to go back');
+        this.setMenuLineWidth();
+    }
+
+    showCredits() {
+        this.clearMenus();
+        this.gameTitle.setText('Tron To The Moon!');
+        this.firstMenuLineText.setText('Development: Tristan van den Elzen');
+        this.secondMenuLineText.setText('Graphics: Sage Sauruk');
+        this.thirdMenuLineText.setText('Inspiration: Roy van Kaathoven');
+        this.bottomMenuLineText.setText('Press [left] to go back');
+        this.setMenuLineWidth();
+    }
+
+    setMenuLineWidth() {
+        this.gameTitle.x = 400 - this.gameTitle.width / 2;
+        this.firstMenuLineText.x = 400 - this.firstMenuLineText.width / 2;
+        this.secondMenuLineText.x = 400 - this.secondMenuLineText.width / 2;
+        this.thirdMenuLineText.x = 400 - this.thirdMenuLineText.width / 2;
+        this.bottomMenuLineText.x = 400 - this.bottomMenuLineText.width / 2;
+    }
+
+    clearMenus() {
+        this.gameTitle.setText('');
+        this.firstMenuLineText.setText('');
+        this.secondMenuLineText.setText('');
+        this.thirdMenuLineText.setText('');
+        this.bottomMenuLineText.setText('');
+    }
+
+    startGame() {
         this.scoreText = this.add.text(8, 576, 'Value: ' + this.score + ' TRX', { fontSize: '16px', fill: '#fff' });
         this.levelText = this.add.text(8, 12, 'Level: ' + this.level, { fontSize: '24px', fill: '#fff' });
         this.bossHealthText = this.add.text(0, 12, '', { fontSize: '24px', fill: '#fff' });
@@ -68,28 +160,9 @@ class Scene {
         this.physics.add.overlap(this.player, this.bossBullets, this.hitBossBullet, null, this);
         this.physics.add.overlap(this.bullets, this.buys, this.shootEntity, null, this);
         this.physics.add.overlap(this.bullets, this.sells, this.shootEntity, null, this);
-    }
 
-    update() {
-        this.handleMovement();
-        this.handleShooting();
-        this.handleGarbage();
-        this.handleTweetMovement();
-        this.handleWhaleMovement();
-        this.handleBossMovement();
-
-        if (this.levelHasEnded())
-            if (this.bossFightPending())
-                this.startBossFight();
-            else
-                this.levelUp();
-
-        this.spawnStuff();
-
-        this.checkIfDead();
-
-        if (this.time.now > this.centerTextTimeout)
-            this.centerText.setText('');
+        this.clearMenus();
+        this.gameRunning = true;
     }
 
     handleMovement() {
