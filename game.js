@@ -158,12 +158,7 @@ class Scene {
                 this.boss.nextShotTime = this.time.now + 1000;
                 this.updateBossHealth(-1);
             } else {
-                // Move to player
-                if ((this.player.body.x < this.boss.body.x + 45 && this.player.body.x <= 650) ||
-                    this.player.body.x <= 100)
-                    this.boss.body.velocity.x = -300;
-                else
-                    this.boss.body.velocity.x = 300;
+                this.moveBossToPlayer();
                 return;
             }
         }
@@ -182,7 +177,35 @@ class Scene {
                 return;
             }
         }
-        this.boss.body.velocity.x = 0;
+
+        // Stand still if a bullet is blocking the way to the player
+        for (let bulletIndex = 0; bulletIndex < this.bullets.children.entries.length; bulletIndex++) {
+            let bullet = this.bullets.children.entries[bulletIndex];
+            if ((this.player.body.x < this.boss.body.x &&
+                    Scene.numbersDifferentiateLessThan(this.boss.body.x - 35, bullet.body.x + 15, 10)) ||
+                (this.player.body.x > this.boss.body.x &&
+                    Scene.numbersDifferentiateLessThan(this.boss.body.x + 105, bullet.body.x - 16, 10))) {
+                // Stand still
+                this.boss.body.velocity.x = 0;
+                return;
+            }
+        }
+        
+        this.moveBossToPlayer();
+    }
+
+    moveBossToPlayer() {
+        if (this.player.body.y < this.boss.body.y ||
+            this.player.body.x < this.boss.body.x - 45 ||
+            this.player.body.x > this.boss.body.x + 45) {
+            // Move
+            if ((this.player.body.x < this.boss.body.x + 45 && this.player.body.x <= 650) ||
+                this.player.body.x <= 100)
+                this.boss.body.velocity.x = -300;
+            else
+                this.boss.body.velocity.x = 300;
+        } else
+            this.boss.body.velocity.x = 0;
     }
 
     levelHasEnded() {
@@ -468,6 +491,11 @@ class Scene {
             if (array[i] === element)
                 return true;
         return false;
+    }
+
+    static numbersDifferentiateLessThan(number1, number2, maxDifferentiation) {
+        return number1 - number2 < maxDifferentiation ||
+            number2 - number1 < maxDifferentiation;
     }
 
     static removePassedItems(collection) {
