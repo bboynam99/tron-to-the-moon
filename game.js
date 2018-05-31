@@ -43,7 +43,7 @@ class Scene {
         this.levelText = this.add.text(8, 12, 'Level: ' + this.level, { fontSize: '24px', fill: '#fff' });
         this.bossHealthText = this.add.text(0, 12, '', { fontSize: '24px', fill: '#fff' });
         this.bossHealthText.x = 792 - this.bossHealthText.width;
-        this.centerText = this.add.text(300, 100, '', { fontSize: '48px', fill: '#C52F27' });
+        this.centerText = this.add.text(0, 200, '', { fontSize: '48px', fill: '#fff' });
 
         this.player = this.physics.add.sprite(400, 530, 'player');
         this.player.setCollideWorldBounds(true);
@@ -483,6 +483,7 @@ class Scene {
 
     displayTextInCenter(text) {
         this.centerText.setText(text);
+        this.centerText.x = 400 - this.centerText.width / 2;
         this.centerTextTimeout = this.time.now + 2000;
     }
 
