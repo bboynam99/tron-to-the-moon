@@ -236,21 +236,21 @@ class Scene {
         if (this.level % 5 === 0)
             this.maxEntitiesPerRow++;
 
-        let buysAndSells = 50 + this.level * 15;
+        let buysAndSells = 30 + this.level * 5;
         this.buysForLevel = buysAndSells;
         this.sellsForLevel = buysAndSells;
 
         if (this.level >= 3)
             this.tweetsForLevel = (this.level - 2) * 2;
 
-        if (this.level >= 8) {
-            let goodAndBadNews = (this.level - 7) * 2;
+        if (this.level >= 6) {
+            let goodAndBadNews = (this.level - 5) * 2;
             this.goodNewsForLevel = goodAndBadNews;
             this.badNewsForLevel = goodAndBadNews;
         }
 
-        if (this.level >= 13)
-            this.whalesForLevel = (this.level - 12);
+        if (this.level >= 9)
+            this.whalesForLevel = (this.level - 8);
     }
 
     startBossFight() {
@@ -312,13 +312,13 @@ class Scene {
     spawnStuff() {
         if (this.time.now > this.nextSpawnTime) {
             this.spawnAnyEntity();
-            this.nextSpawnTime = this.time.now + 850 - (this.velocityWeight * 10);
+            this.nextSpawnTime = this.time.now + 850 - (this.velocityWeight * 20);
         }
     }
 
     spawnAnyEntity() {
-        let buysRange = this.buysForLevel / 5;
-        let sellsRange = buysRange + this.sellsForLevel / 5;
+        let buysRange = this.buysForLevel / 15;
+        let sellsRange = buysRange + this.sellsForLevel / 15;
         let tweetsRange = sellsRange + this.tweetsForLevel;
         let goodNewsRange = tweetsRange + this.goodNewsForLevel;
         let badNewsRange = goodNewsRange + this.badNewsForLevel;
