@@ -34,6 +34,11 @@ class Scene {
         this.load.image('ethereum', 'assets/ethereum.png');
         this.load.image('bitcoin', 'assets/bitcoin.png');
 
+        this.load.image('ltccoin', 'assets/ltccoin.png');
+        this.load.image('eoscoin', 'assets/eoscoin.png');
+        this.load.image('xrpcoin', 'assets/xrpcoin.png');
+        this.load.image('ethcoin', 'assets/ethcoin.png');
+        this.load.image('btccoin', 'assets/btccoin.png');
         this.load.image('trxcoin', 'assets/trxcoin.png');
     }
 
@@ -152,10 +157,10 @@ class Scene {
                 this.player.body.x > this.boss.body.x - 45 &&
                 this.player.body.x < this.boss.body.x + 45) {
                 // Shoot
-                let bullet = this.physics.add.sprite(this.boss.x, this.boss.y, 'trxcoin');
+                let bullet = this.physics.add.sprite(this.boss.x, this.boss.y, this.boss.coinSprite);
                 this.bossBullets.add(bullet);
                 bullet.body.velocity.y = 750;
-                this.boss.nextShotTime = this.time.now + 1000;
+                this.boss.nextShotTime = this.time.now + this.boss.shotDelay;
                 this.updateBossHealth(-1);
             } else {
                 this.moveBossToPlayer();
@@ -171,9 +176,9 @@ class Scene {
                 bullet.body.x < this.boss.body.x + 105) {
                 // Dodge
                 if ((bullet.body.x < this.boss.body.x + 45 && bullet.body.x <= 650) || bullet.body.x <= 100)
-                    this.boss.body.velocity.x = 300;
+                    this.boss.body.velocity.x = this.boss.speed;
                 else
-                    this.boss.body.velocity.x = -300;
+                    this.boss.body.velocity.x = this.boss.speed * -1;
                 return;
             }
         }
@@ -190,7 +195,7 @@ class Scene {
                 return;
             }
         }
-        
+
         this.moveBossToPlayer();
     }
 
@@ -201,9 +206,9 @@ class Scene {
             // Move
             if ((this.player.body.x < this.boss.body.x + 45 && this.player.body.x <= 650) ||
                 this.player.body.x <= 100)
-                this.boss.body.velocity.x = -300;
+                this.boss.body.velocity.x = this.boss.speed * -1;
             else
-                this.boss.body.velocity.x = 300;
+                this.boss.body.velocity.x = this.boss.speed;
         } else
             this.boss.body.velocity.x = 0;
     }
@@ -255,33 +260,53 @@ class Scene {
     startBossFight() {
         if (this.level === 5) {
             this.boss = this.physics.add.sprite(400, 70, 'litecoin');
-            this.boss.health = 100;
             this.boss.fullname = 'Litecoin';
             this.boss.coinname = 'LTC';
+            this.boss.coinSprite = 'ltccoin';
+            this.boss.health = 200;
+            this.boss.speed = 100;
+            this.boss.shotDelay = 2500;
+            this.boss.shotDamage = 20;
         } else if (this.level === 10) {
             this.boss = this.physics.add.sprite(400, 70, 'eos');
-            this.boss.health = 100;
             this.boss.fullname = 'EOS';
             this.boss.coinname = 'EOS';
+            this.boss.coinSprite = 'eoscoin';
+            this.boss.health = 500;
+            this.boss.speed = 150;
+            this.boss.shotDelay = 2000;
+            this.boss.shotDamage = 30;
         } else if (this.level === 15) {
             this.boss = this.physics.add.sprite(400, 70, 'ripple');
-            this.boss.health = 100;
             this.boss.fullname = 'Ripple';
             this.boss.coinname = 'XRP';
+            this.boss.coinSprite = 'xrpcoin';
+            this.boss.health = 1000;
+            this.boss.speed = 200;
+            this.boss.shotDelay = 1500;
+            this.boss.shotDamage = 50;
         } else if (this.level === 20) {
             this.boss = this.physics.add.sprite(400, 70, 'ethereum');
-            this.boss.health = 100;
             this.boss.fullname = 'Ethereum';
             this.boss.coinname = 'ETH';
+            this.boss.coinSprite = 'ethcoin';
+            this.boss.health = 1500;
+            this.boss.speed = 250;
+            this.boss.shotDelay = 1000;
+            this.boss.shotDamage = 80;
         } else if (this.level === 25) {
             this.boss = this.physics.add.sprite(400, 70, 'bitcoin');
-            this.boss.health = 100;
             this.boss.fullname = 'Bitcoin';
             this.boss.coinname = 'BTC';
+            this.boss.coinSprite = 'btccoin';
+            this.boss.health = 2500;
+            this.boss.speed = 300;
+            this.boss.shotDelay = 500;
+            this.boss.shotDamage = 100;
         } else
             return;
 
-        this.boss.nextShotTime = this.time.now + 500;
+        this.boss.nextShotTime = this.time.now + this.boss.shotDelay;
         this.physics.add.overlap(this.bullets, this.boss, this.shootBoss, null, this);
         this.levelText.setText('Level: ' + this.boss.fullname);
         this.displayTextInCenter('Coin deathmatch!');
@@ -437,7 +462,7 @@ class Scene {
     shootBoss(boss, bullet) {
         this.bullets.remove(bullet);
         bullet.disableBody(true, true);
-        this.updateBossHealth(-10);
+        this.updateBossHealth(-20);
     }
 
     hitBuy(player, buy) {
@@ -461,7 +486,7 @@ class Scene {
     hitBossBullet(player, bossBullet) {
         this.bossBullets.remove(bossBullet);
         bossBullet.disableBody(true, true);
-        this.updateScore(-20);
+        this.updateScore(this.boss.shotDamage * -1);
     }
 
     updateScore(amount) {
