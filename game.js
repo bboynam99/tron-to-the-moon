@@ -23,26 +23,29 @@ class Scene {
 
     preload() {
         this.keys = this.input.keyboard.createCursorKeys();
-        this.load.image('background', 'assets/background.png');
-        this.load.image('player', 'assets/player.png');
 
-        this.load.image('buy', 'assets/buy.png');
-        this.load.image('sell', 'assets/sell.png');
-        this.load.image('tweet', 'assets/tweet.png');
-        this.load.image('whale', 'assets/whale.png');
+        let assetPath = window.location.href + 'assets/';
 
-        this.load.image('litecoin', 'assets/litecoin.png');
-        this.load.image('eos', 'assets/eos.png');
-        this.load.image('ripple', 'assets/ripple.png');
-        this.load.image('ethereum', 'assets/ethereum.png');
-        this.load.image('bitcoin', 'assets/bitcoin.png');
+        this.load.image('background', assetPath + 'background.png');
+        this.load.image('player', assetPath + 'player.png');
 
-        this.load.image('ltccoin', 'assets/ltccoin.png');
-        this.load.image('eoscoin', 'assets/eoscoin.png');
-        this.load.image('xrpcoin', 'assets/xrpcoin.png');
-        this.load.image('ethcoin', 'assets/ethcoin.png');
-        this.load.image('btccoin', 'assets/btccoin.png');
-        this.load.image('trxcoin', 'assets/trxcoin.png');
+        this.load.image('buy', assetPath + 'buy.png');
+        this.load.image('sell', assetPath + 'sell.png');
+        this.load.image('tweet', assetPath + 'tweet.png');
+        this.load.image('whale', assetPath + 'whale.png');
+
+        this.load.image('litecoin', assetPath + 'litecoin.png');
+        this.load.image('eos', assetPath + 'eos.png');
+        this.load.image('ripple', assetPath + 'ripple.png');
+        this.load.image('ethereum', assetPath + 'ethereum.png');
+        this.load.image('bitcoin', assetPath + 'bitcoin.png');
+
+        this.load.image('ltccoin', assetPath + 'ltccoin.png');
+        this.load.image('eoscoin', assetPath + 'eoscoin.png');
+        this.load.image('xrpcoin', assetPath + 'xrpcoin.png');
+        this.load.image('ethcoin', assetPath + 'ethcoin.png');
+        this.load.image('btccoin', assetPath + 'btccoin.png');
+        this.load.image('trxcoin', assetPath + 'trxcoin.png');
     }
 
     create() {
