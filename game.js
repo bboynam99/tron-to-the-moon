@@ -16,6 +16,7 @@ class Scene {
         this.nextFireTime = 0;
         this.nextSpawnTime = 0;
         this.centerTextTimeout = 0;
+        this.nextNewsCountdown = 0;
 
         this.maxEntitiesPerRow = 2;
         this.velocityWeight = 0;
@@ -318,7 +319,7 @@ class Scene {
             return;
         }
 
-        this.velocityWeight = this.level + 9;
+        this.velocityWeight = this.level / 2 + 9;
 
         this.levelText.setText('Level: ' + this.level);
         if (this.level !== 1)
@@ -327,21 +328,21 @@ class Scene {
         if (this.level % 5 === 0)
             this.maxEntitiesPerRow++;
 
-        let buysAndSells = 30 + this.level * 5;
+        let buysAndSells = 20 + this.level * 2;
         this.buysForLevel = buysAndSells;
         this.sellsForLevel = buysAndSells;
 
         if (this.level >= 3)
-            this.tweetsForLevel = (this.level - 2) * 2;
+            this.tweetsForLevel = Math.floor(this.level / 2) * 3;
 
-        if (this.level >= 6) {
-            let goodAndBadNews = (this.level - 5) * 2;
+        if (this.level >= 6 && this.level % 3 === 0) {
+            let goodAndBadNews = Math.floor(this.level / 3);
             this.goodNewsForLevel = goodAndBadNews;
             this.badNewsForLevel = goodAndBadNews;
         }
 
         if (this.level >= 9)
-            this.whalesForLevel = (this.level - 8);
+            this.whalesForLevel = Math.floor(this.level / 2) - 3;
     }
 
     startBossFight() {
@@ -408,11 +409,20 @@ class Scene {
     }
 
     spawnAnyEntity() {
-        let buysRange = this.buysForLevel / 15;
-        let sellsRange = buysRange + this.sellsForLevel / 15;
+        let buysRange = this.buysForLevel / ((this.maxEntitiesPerRow + 1) / 2);
+        let sellsRange = buysRange + this.sellsForLevel / ((this.maxEntitiesPerRow + 1) / 2);
         let tweetsRange = sellsRange + this.tweetsForLevel;
-        let goodNewsRange = tweetsRange + this.goodNewsForLevel;
-        let badNewsRange = goodNewsRange + this.badNewsForLevel;
+
+        let goodNewsRange, badNewsRange;
+        if (this.nextNewsCountdown === 0) {
+            goodNewsRange = tweetsRange + this.goodNewsForLevel;
+            badNewsRange = goodNewsRange + this.badNewsForLevel;
+        } else {
+            goodNewsRange = tweetsRange;
+            badNewsRange = goodNewsRange;
+            this.nextNewsCountdown--;
+        }
+
         let whalesRange = badNewsRange + this.whalesForLevel;
         let rangeLimit = whalesRange * 1.1;
 
@@ -480,7 +490,7 @@ class Scene {
     spawnTweet() {
         let tweet = this.physics.add.sprite(Scene.getRandomColumnForEntity(), -30, 'tweet');
         this.tweets.add(tweet);
-        tweet.body.velocity.y = 5 * this.velocityWeight;
+        tweet.body.velocity.y = 10 * this.velocityWeight;
         tweet.body.velocity.x = 10 * this.velocityWeight;
 
         if (Scene.getRandomBetween(1, 2) === 1)
@@ -497,6 +507,7 @@ class Scene {
             buy.body.velocity.y = 15 * this.velocityWeight;
         }
         this.goodNewsForLevel--;
+        this.nextNewsCountdown = 5;
     }
 
     spawnBadNews() {
@@ -506,6 +517,7 @@ class Scene {
             sell.body.velocity.y = 15 * this.velocityWeight;
         }
         this.badNewsForLevel--;
+        this.nextNewsCountdown = 5;
     }
 
     spawnWhale() {
@@ -555,7 +567,7 @@ class Scene {
     hitSell(player, sell) {
         this.sells.remove(sell);
         sell.disableBody(true, true);
-        this.updateScore(-10);
+        this.updateScore(-20);
     }
 
     hitTweet(player, tweet) {
