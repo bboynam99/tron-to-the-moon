@@ -167,6 +167,7 @@ class Scene {
         this.physics.add.overlap(this.player, this.bossBullets, this.hitBossBullet, null, this);
         this.physics.add.overlap(this.bullets, this.buys, this.shootEntity, null, this);
         this.physics.add.overlap(this.bullets, this.sells, this.shootEntity, null, this);
+        this.physics.add.overlap(this.bullets, this.tweets, this.shootEntity, null, this);
 
         this.clearMenus();
         this.inMenu = false;
