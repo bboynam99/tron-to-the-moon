@@ -533,13 +533,13 @@ class Scene {
 
         // Sells bulk
         for (let i = 1; i <= 5; i++) {
-            let sell = this.physics.add.sprite(position - 135 + 45 * i, -650 + sellsHeadstart, 'sell');
+            let sell = this.physics.add.sprite(position - 135 + 45 * i, -675 + sellsHeadstart, 'sell');
             this.sells.add(sell);
             sell.body.velocity.y = 30 * this.velocityWeight;
         }
 
         // Whale
-        let whale = this.physics.add.sprite(position, -680 + sellsHeadstart, 'whale');
+        let whale = this.physics.add.sprite(position, -705 + sellsHeadstart, 'whale');
         this.whales.add(whale);
         whale.body.velocity.y = 30 * this.velocityWeight;
         whale.rotation = 1;
@@ -678,7 +678,7 @@ class Scene {
     static removePassedItems(collection) {
         for (let i = 0; i < collection.children.entries.length; i++) {
             let item = collection.children.entries[i];
-            if (item.body.y >= 600 || item.body.y <= -700) {
+            if (item.body.y >= 600 || item.body.y <= -750) {
                 collection.remove(item);
                 item.disableBody(true, true);
             }
