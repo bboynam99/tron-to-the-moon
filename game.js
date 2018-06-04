@@ -568,19 +568,23 @@ class Scene {
     }
 
     updateScore(amount) {
-        this.score += amount;
-        this.scoreText.setText('Value: ' + this.score + ' TRX');
+        if (this.gameRunning) {
+            this.score += amount;
+            this.scoreText.setText('Value: ' + this.score + ' TRX');
+        }
     }
 
     updateBossHealth(amount) {
-        this.boss.health += amount;
-        this.bossHealthText.setText('Boss\' value: ' + this.boss.health + ' ' + this.boss.coinname);
-        this.bossHealthText.x = 792 - this.bossHealthText.width;
+        if (this.gameRunning) {
+            this.boss.health += amount;
+            this.bossHealthText.setText('Boss\' value: ' + this.boss.health + ' ' + this.boss.coinname);
+            this.bossHealthText.x = 792 - this.bossHealthText.width;
 
-        if (this.boss.health <= 0) {
-            this.boss.disableBody(true, true);
-            this.boss = null;
-            this.levelUp();
+            if (this.boss.health <= 0) {
+                this.boss.disableBody(true, true);
+                this.boss = null;
+                this.levelUp();
+            }
         }
     }
 
