@@ -1,7 +1,9 @@
 class Scene {
     init() {
-        this.gameRunning = false;
-        this.inMenu = false;
+        this.gameState = '';
+        this.menuPage = 1;
+        this.lastNavigationTime = 0;
+
         this.level = 0;
         this.score = 0;
         this.deathTime = 0;
@@ -54,41 +56,76 @@ class Scene {
 
         this.initMenuTexts();
         this.showMainMenu();
+        this.lastNavigationTime = 0;
     }
 
     update() {
-        if (this.gameRunning) {
-            this.handleMovement();
-            this.handleShooting();
-            this.handleGarbage();
-            this.handleTweetMovement();
-            this.handleWhaleMovement();
-            this.handleBossMovement();
+        switch (this.gameState) {
+            case 'mainmenu':
+                if (this.time.now > this.lastNavigationTime + 200) {
+                    if (this.keys.space.isDown) {
+                        this.menuPage = 1;
+                        this.startGame();
+                    }
+                    if (this.keys.up.isDown) {
+                        this.menuPage = 1;
+                        this.showHowToPlay();
+                    }
+                    if (this.keys.down.isDown) {
+                        this.menuPage = 1;
+                        this.showCredits();
+                    }
+                }
+                break;
 
-            if (this.levelHasEnded())
-                if (this.bossFightPending())
-                    this.startBossFight();
-                else
-                    this.levelUp();
+            case 'howtoplay':
+                if (this.time.now > this.lastNavigationTime + 200) {
+                    if (this.keys.down.isDown)
+                        this.showMainMenu();
+                    if (this.keys.left.isDown && this.menuPage !== 1) {
+                        this.menuPage--;
+                        this.showHowToPlay();
+                    }
+                    if (this.keys.right.isDown && this.menuPage !== 4) {
+                        this.menuPage++;
+                        this.showHowToPlay();
+                    }
+                }
+                break;
 
-            this.spawnStuff();
+            case 'credits':
+                if (this.time.now > this.lastNavigationTime + 200) {
+                    if (this.keys.up.isDown)
+                        this.showMainMenu();
+                }
+                break;
 
-            this.checkIfDead();
+            case 'gameover':
+                if (this.keys.space.isDown && this.time.now > this.lastNavigationTime + 3000)
+                    this.resetGame();
+                break;
 
-            if (this.time.now > this.centerTextTimeout)
-                this.centerText.setText('');
-        } else if(this.inMenu) {
-            if (this.keys.space.isDown)
-                this.startGame();
-            if (this.keys.left.isDown)
-                this.showMainMenu();
-            if (this.keys.up.isDown)
-                this.showControls();
-            if (this.keys.down.isDown)
-                this.showCredits();
-        } else {
-            if (this.keys.left.isDown && this.time.now > this.deathTime + 3000)
-                this.resetGame();
+            case 'running':
+                this.handleMovement();
+                this.handleShooting();
+                this.handleGarbage();
+                this.handleTweetMovement();
+                this.handleWhaleMovement();
+                this.handleBossMovement();
+
+                if (this.levelHasEnded())
+                    if (this.bossFightPending())
+                        this.startBossFight();
+                    else
+                        this.levelUp();
+
+                this.spawnStuff();
+
+                this.checkIfDead();
+
+                if (this.time.now > this.centerTextTimeout)
+                    this.centerText.setText('');
+                break;
         }
     }
 
@@ -97,36 +134,111 @@ class Scene {
         this.firstMenuLineText = this.add.text(0, 230, '', { fontSize: '36px', fill: '#fff' });
         this.secondMenuLineText = this.add.text(0, 290, '', { fontSize: '36px', fill: '#fff' });
         this.thirdMenuLineText = this.add.text(0, 350, '', { fontSize: '36px', fill: '#fff' });
+        this.paginationText = this.add.text(0, 496, '', { fontSize: '36px', fill: '#fff' });
         this.bottomMenuLineText = this.add.text(0, 556, '', { fontSize: '36px', fill: '#fff' });
+        this.menuImages = this.physics.add.group();
     }
 
     showMainMenu() {
-        this.inMenu = true;
-
+        this.lastNavigationTime = this.time.now;
+        this.gameState = 'mainmenu';
         this.clearMenus();
+
         this.gameTitle.setText('Tron To The Moon!');
         this.firstMenuLineText.setText('Press [space] to start game');
-        this.secondMenuLineText.setText('Press [up] to see the controls');
+        this.secondMenuLineText.setText('Press [up] to see how to play');
         this.thirdMenuLineText.setText('Press [down] to see the credits');
+
         this.setMenuLineWidth();
     }
 
-    showControls() {
+    showHowToPlay() {
+        this.lastNavigationTime = this.time.now;
+        this.gameState = 'howtoplay';
         this.clearMenus();
+
+        let paginationText = '< (' + this.menuPage + '/4) >';
+
+        switch (this.menuPage) {
+            case 1:
+                this.firstMenuLineText.setText('Move around with [left] and [right]');
+                this.secondMenuLineText.setText('Shoot a coin with [space]');
+                this.menuImages.add(this.physics.add.sprite(350, 400, 'player'));
+                this.menuImages.add(this.physics.add.sprite(450, 400, 'trxcoin'));
+                paginationText = '  ' + paginationText.substring(2);
+                break;
+            case 2:
+                this.firstMenuLineText.setText('Buys increase value by 10');
+                this.secondMenuLineText.setText('Sales decrease value by 20');
+                this.thirdMenuLineText.setText('Justin\'s Tweets increase value by 25');
+                this.menuImages.add(this.physics.add.sprite(300, 430, 'buy'));
+                this.menuImages.add(this.physics.add.sprite(400, 430, 'sell'));
+                this.menuImages.add(this.physics.add.sprite(500, 430, 'tweet'));
+                break;
+            case 3:
+                this.firstMenuLineText.setText('Clustered buys might be pumps');
+                this.secondMenuLineText.setText('Watch out for the following dumps');
+                this.menuImages.add(this.physics.add.sprite(400, 400, 'whale'));
+                break;
+            case 4:
+                this.firstMenuLineText.setText('Defeat all bosses to reach the moon!');
+                this.menuImages.add(this.physics.add.sprite(200, 340, 'litecoin'));
+                this.menuImages.add(this.physics.add.sprite(300, 340, 'eos'));
+                this.menuImages.add(this.physics.add.sprite(400, 340, 'ripple'));
+                this.menuImages.add(this.physics.add.sprite(500, 340, 'ethereum'));
+                this.menuImages.add(this.physics.add.sprite(600, 340, 'bitcoin'));
+                this.menuImages.add(this.physics.add.sprite(200, 430, 'ltccoin'));
+                this.menuImages.add(this.physics.add.sprite(300, 430, 'eoscoin'));
+                this.menuImages.add(this.physics.add.sprite(400, 430, 'xrpcoin'));
+                this.menuImages.add(this.physics.add.sprite(500, 430, 'ethcoin'));
+                this.menuImages.add(this.physics.add.sprite(600, 430, 'btccoin'));
+                paginationText = paginationText.substring(0, paginationText.length - 2) + '  ';
+                break;
+        }
+
         this.gameTitle.setText('Tron To The Moon!');
-        this.firstMenuLineText.setText('Move around with [left] and [right]');
-        this.secondMenuLineText.setText('Shoot a coin with [space]');
-        this.bottomMenuLineText.setText('Press [left] to go back');
+        this.paginationText.setText(paginationText);
+        this.bottomMenuLineText.setText('Press [down] to go back');
+
         this.setMenuLineWidth();
     }
 
     showCredits() {
+        this.lastNavigationTime = this.time.now;
+        this.gameState = 'credits';
         this.clearMenus();
+
         this.gameTitle.setText('Tron To The Moon!');
         this.firstMenuLineText.setText('Development: Tristan van den Elzen');
         this.secondMenuLineText.setText('Graphics: Sage Sauruk');
         this.thirdMenuLineText.setText('Inspiration: Roy van Kaathoven');
-        this.bottomMenuLineText.setText('Press [left] to go back');
+        this.bottomMenuLineText.setText('Press [up] to go back');
+
+        this.setMenuLineWidth();
+    }
+
+    showGameWon() {
+        this.lastNavigationTime = this.time.now;
+        this.gameState = 'gameover';
+        this.clearMenus();
+
+        this.gameTitle.setText('You went to the moon!');
+        this.firstMenuLineText.setText('You made it to level ' + this.level);
+        this.secondMenuLineText.setText('Your score is ' + this.score + ' TRX');
+        this.thirdMenuLineText.setText('Press [space] to return');
+        this.setMenuLineWidth();
+    }
+
+    showGameOver() {
+        this.lastNavigationTime = this.time.now;
+        this.gameState = 'gameover';
+        this.clearMenus();
+
+        this.gameTitle.setText('Game over.');
+        this.firstMenuLineText.setText('You made it to level ' + this.level);
+        this.secondMenuLineText.setText('Your score is ' + this.score + ' TRX');
+        this.thirdMenuLineText.setText('Press [space] to return');
+
         this.setMenuLineWidth();
     }
 
@@ -135,6 +247,7 @@ class Scene {
         this.firstMenuLineText.x = 400 - this.firstMenuLineText.width / 2;
         this.secondMenuLineText.x = 400 - this.secondMenuLineText.width / 2;
         this.thirdMenuLineText.x = 400 - this.thirdMenuLineText.width / 2;
+        this.paginationText.x = 400 - this.paginationText.width / 2;
         this.bottomMenuLineText.x = 400 - this.bottomMenuLineText.width / 2;
     }
 
@@ -143,7 +256,11 @@ class Scene {
         this.firstMenuLineText.setText('');
         this.secondMenuLineText.setText('');
         this.thirdMenuLineText.setText('');
+        this.paginationText.setText('');
         this.bottomMenuLineText.setText('');
+
+        for (let i = 0; i < this.menuImages.children.entries.length; i++)
+            this.menuImages.children.entries[i].disableBody(true, true);
     }
 
     startGame() {
@@ -174,8 +291,7 @@ class Scene {
         this.physics.add.overlap(this.bullets, this.tweets, this.shootEntity, null, this);
 
         this.clearMenus();
-        this.inMenu = false;
-        this.gameRunning = true;
+        this.gameState = 'running';
     }
 
     handleMovement() {
@@ -583,14 +699,14 @@ class Scene {
     }
 
     updateScore(amount) {
-        if (this.gameRunning) {
+        if (this.gameState === 'running') {
             this.score += amount;
             this.scoreText.setText('Value: ' + this.score + ' TRX');
         }
     }
 
     updateBossHealth(amount) {
-        if (this.gameRunning) {
+        if (this.gameState === 'running') {
             this.boss.health += amount;
             this.bossHealthText.setText('Boss\' value: ' + this.boss.health + ' ' + this.boss.coinname);
             this.bossHealthText.x = 792 - this.bossHealthText.width;
@@ -611,36 +727,22 @@ class Scene {
 
     checkIfDead() {
         if (this.score < 0) {
-            this.gameRunning = false;
-
             this.scoreText.setText('');
             this.levelText.setText('');
             this.bossHealthText.setText('');
             this.centerText.setText('');
 
-            this.gameTitle.setText('Game over.');
-            this.firstMenuLineText.setText('You made it to level ' + this.level);
-            this.secondMenuLineText.setText('Your score is ' + this.score + ' TRX');
-            this.thirdMenuLineText.setText('Press [left] to return');
-            this.setMenuLineWidth();
-
-            this.deathTime = this.time.now;
+            this.showGameOver();
         }
     }
 
     gameWon() {
-        this.gameRunning = false;
-
         this.scoreText.setText('');
         this.levelText.setText('');
         this.bossHealthText.setText('');
         this.centerText.setText('');
 
-        this.gameTitle.setText('You went to the moon!');
-        this.firstMenuLineText.setText('You made it to level ' + this.level);
-        this.secondMenuLineText.setText('Your score is ' + this.score + ' TRX');
-        this.thirdMenuLineText.setText('Press [left] to return');
-        this.setMenuLineWidth();
+        this.showGameWon();
 
         this.deathTime = this.time.now;
     }
